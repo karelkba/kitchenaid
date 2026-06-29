@@ -1552,6 +1552,14 @@ function renderAlles() {
   renderOverzicht();
 }
 
+// Test mode: ?test=1 in URL activeert volledige versie tijdelijk
+(function() {
+  if (window.location.search.includes('test=1')) {
+    window._LICENTIE_GELDIG = true;
+    console.log('TEST MODE: volledige versie actief');
+  }
+})();
+
 // Start met 1 groep klaar
 injectDieetStyles();
 groepToevoegen();
