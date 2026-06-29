@@ -405,6 +405,19 @@ function ontgrendelVolledigeVersie() {
 // ═══════════════════════════════════════════════════
 // GRATIS VERSIE BEPERKINGEN
 // ═══════════════════════════════════════════════════
+// Test mode via URL parameter
+if (window.location.search.includes('test=1')) { window._LICENTIE_GELDIG = true; }
+// Check opgeslagen licentie
+if (!window._LICENTIE_GELDIG) {
+  const _lic = localStorage.getItem('gk_licentie');
+  const _vol = localStorage.getItem('gk_volledig');
+  if (_lic && _vol) {
+    try {
+      const _d = JSON.parse(_lic);
+      if (!_d.verloopt || new Date(_d.verloopt) > new Date()) window._LICENTIE_GELDIG = true;
+    } catch(e) {}
+  }
+}
 const GRATIS = !window._LICENTIE_GELDIG;
 const MAX_GROEPEN = 2;
 const MAX_ING = 4;
@@ -1551,14 +1564,6 @@ function renderAlles() {
   renderIngSecties();
   renderOverzicht();
 }
-
-// Test mode: ?test=1 in URL activeert volledige versie tijdelijk
-(function() {
-  if (window.location.search.includes('test=1')) {
-    window._LICENTIE_GELDIG = true;
-    console.log('TEST MODE: volledige versie actief');
-  }
-})();
 
 // Start met 1 groep klaar
 injectDieetStyles();
