@@ -215,6 +215,27 @@ header input { height: 30px; border: 1px solid #ddd; border-radius: 5px; padding
 </div>
 
 <script>
+// ── TEST MODE + LICENTIE CHECK (moet als eerste draaien) ──
+(function() {
+  // Test via URL
+  if (window.location.search.indexOf('test=1') !== -1) {
+    window._LICENTIE_GELDIG = true;
+    return;
+  }
+  // Check localStorage
+  try {
+    const vol = localStorage.getItem('gk_volledig');
+    const lic = localStorage.getItem('gk_licentie');
+    if (vol && lic) {
+      const d = JSON.parse(lic);
+      if (!d.verloopt || new Date(d.verloopt) > new Date()) {
+        window._LICENTIE_GELDIG = true;
+      }
+    }
+  } catch(e) {}
+})();
+
+
 
 
 // ═══════════════════════════════════════════════════
