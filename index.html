@@ -6,6 +6,8 @@
 <title>Groepskoken planner — Gratis versie</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 body { font-family: Arial, sans-serif; font-size: 12px; color: #222; background: #f2f2f0; }
 
 header { background: #fff; border-bottom: 1px solid #ddd; padding: 10px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -148,7 +150,7 @@ header input { height: 30px; border: 1px solid #ddd; border-radius: 5px; padding
 <body>
 
 <header>
-  <h1>🍳 Groepskoken</h1><span style="font-size:10px;font-weight:700;background:#f5c542;color:#7a5c00;padding:2px 8px;border-radius:4px;white-space:nowrap">GRATIS VERSIE</span>
+  <h1>🍳 Groepskoken</h1><span id="licentie-status-badge"></span>
   <div class="header-veld">
     <label for="gerecht">Gerecht:</label>
     <input type="text" id="gerecht" placeholder="bijv. Spaghetti bolognese" autocomplete="off">
@@ -175,7 +177,7 @@ header input { height: 30px; border: 1px solid #ddd; border-radius: 5px; padding
       📂 Laden
       <input type="file" id="laden-input" accept=".json" style="display:none" onchange="ladenData(event)">
     </label>
-    <a href="https://groepskoken.gumroad.com" target="_blank" style="height:30px;padding:0 12px;background:#3a6e3a;color:#fff;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;text-decoration:none">⭐ Volledige versie — €9</a>
+    <button onclick="toonLicentieScherm()" id="btn-licentie" style="height:30px;padding:0 12px;background:#f5c542;color:#7a5c00;border:none;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">⭐ Activeer volledige versie</button>
   </div>
 </header>
 
@@ -214,10 +216,196 @@ header input { height: 30px; border: 1px solid #ddd; border-radius: 5px; padding
 
 <script>
 
+
+// ═══════════════════════════════════════════════════
+// LICENTIE SYSTEEM
+// ═══════════════════════════════════════════════════
+const LS_KEY = 'gk_licentie';
+const LS_INSTANCE = 'gk_instance';
+const API_KEY = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI5NGQ1OWNlZi1kYmI4LTRlYTUtYjE3OC1kMjU0MGZjZDY5MTkiLCJqdGkiOiJkODZlZTEzZTU4NzI0NWE3MWVkMmZiOWQwYWViNjkwYTBhMTBiYmRlZjFlMWIxYTkwNTVhNmVlYmZmMmM5NGE5NGYzODczYzMzMTE0NjdlMiIsImlhdCI6MTc4MjczNTE3NS4yNzk5NzIsIm5iZiI6MTc4MjczNTE3NS4yNzk5NzUsImV4cCI6MTc5ODUwMjQwMC4wMjU5NTYsInN1YiI6Ijc0NTE5MzMiLCJzY29wZXMiOltdfQ.bzv_VOff3xq376r_hzHGMwuoyDnBD8I6Cu8rDFitAhho5e6MbqQjGjvyXgBa79wpNJq6ENzedRVEKXu0usT3uNNc6FpdLWjT48OvoX0MUAgmVP828Csd_SAopqpR9Ax1bJ3QlBSTF39zbd3HYBfXK59IePPiwh7rlGYB9wSh6IBWA_JAzGcIW6z4IZOLGtDo0YM1d6bdVVCLek5vX4NE8jwKZUMnArt36UYmWq3R74int4wd67Jnko56yYA1M3yzu3ZYE9tNpGMAu8awgaJKMAABNrLBuunB5M2FCX_MjsGgxv712aibiuiiHWr4eFOBC2lQHDkOymwPuZUO27zINEq17B_kTN60e7vrzPhC_cpjw3GYkh9ZmnANQ35reqAzdPK8PWmrB9MrF-HTVdUc1IewO1P6TJu5jfw41j9aw8-rppVLffuJY2KyjdufpYulM_4IvHupcfjKH4y5WN-Y3zMysfPskdwHSqeLaEtwDkDISN28XMt2jJB9ip01r2lnsigOxLV-EvWsBkZ2UkiNE2YHImg2JdePAjKUlmnjK8Jh_U4AdXk-n8H7N2ErJ1gb2F-ekyZRQf2596TjZpRzfpJkzSooWXDZOIJp_CTseKSliSFN44ivb1_oH2Kqbk65Va7Cgp42QVxs4Z0jtlCzVV2ZqaSTGIQPZR9DFpTQD6c';
+const CHECKOUT_URL = 'https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031';
+
+// Genereer unieke instance ID voor dit toestel
+function getInstanceId() {
+  let id = localStorage.getItem(LS_INSTANCE);
+  if (!id) {
+    id = 'browser-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+    localStorage.setItem(LS_INSTANCE, id);
+  }
+  return id;
+}
+
+// Check of een opgeslagen licentie nog geldig is
+function getLicentieStatus() {
+  try {
+    const data = JSON.parse(localStorage.getItem(LS_KEY) || 'null');
+    if (!data) return null;
+    // Check vervaldatum
+    if (data.verloopt && new Date(data.verloopt) < new Date()) return null;
+    return data;
+  } catch(e) { return null; }
+}
+
+async function valideerLicentie(code) {
+  try {
+    const resp = await fetch('https://api.lemonsqueezy.com/v1/licenses/validate', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        license_key: code.trim().toUpperCase(),
+        instance_name: getInstanceId()
+      })
+    });
+    const data = await resp.json();
+    return data;
+  } catch(e) {
+    return { valid: false, error: e.message };
+  }
+}
+
+async function activeerLicentie(code) {
+  try {
+    const resp = await fetch('https://api.lemonsqueezy.com/v1/licenses/activate', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + API_KEY,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        license_key: code.trim().toUpperCase(),
+        instance_name: getInstanceId()
+      })
+    });
+    const data = await resp.json();
+    return data;
+  } catch(e) {
+    return { activated: false, error: e.message };
+  }
+}
+
+function slaLicentieOp(code, verloopt) {
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    code: code.trim().toUpperCase(),
+    verloopt: verloopt,
+    geactiveerd: new Date().toISOString()
+  }));
+}
+
+function toonLicentieScherm() {
+  const bestaand = getLicentieStatus();
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'licentie-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center';
+  
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:32px;max-width:420px;width:90%;box-shadow:0 16px 48px rgba(0,0,0,0.2);text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">🍳</div>
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:8px;color:#222">Groepskoken planner</h2>
+      <p style="font-size:13px;color:#666;margin-bottom:24px">Voer je licentiecode in om de volledige versie te activeren.</p>
+      
+      <input type="text" id="licentie-input" placeholder="XXXX-XXXX-XXXX-XXXX" 
+        style="width:100%;height:42px;border:2px solid #ddd;border-radius:6px;padding:0 12px;font-size:14px;text-align:center;letter-spacing:1px;margin-bottom:8px;box-sizing:border-box">
+      <div id="licentie-fout" style="font-size:12px;color:#b00;min-height:18px;margin-bottom:12px"></div>
+      
+      <button id="licentie-btn" onclick="licentieActiveren()"
+        style="width:100%;height:42px;background:#3a6e3a;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:12px">
+        ✓ Activeer volledige versie
+      </button>
+      
+      <div style="border-top:1px solid #eee;padding-top:16px;margin-top:4px">
+        <p style="font-size:12px;color:#888;margin-bottom:10px">Nog geen licentie?</p>
+        <a href="https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031" target="_blank"
+          style="display:block;background:#f5c542;color:#7a5c00;padding:10px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:10px">
+          ⭐ Koop volledige versie — €9.99
+        </a>
+        <button onclick="document.getElementById('licentie-overlay').remove()"
+          style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">
+          Verder in gratis versie
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  // Auto-focus
+  setTimeout(() => {
+    const inp = document.getElementById('licentie-input');
+    if (inp) inp.focus();
+  }, 100);
+}
+
+async function licentieActiveren() {
+  const input = document.getElementById('licentie-input');
+  const fout = document.getElementById('licentie-fout');
+  const btn = document.getElementById('licentie-btn');
+  const code = input ? input.value.trim() : '';
+  
+  if (!code) { if(fout) fout.textContent = 'Voer een licentiecode in.'; return; }
+  
+  btn.textContent = 'Bezig...';
+  btn.disabled = true;
+  if(fout) fout.textContent = '';
+  
+  // Probeer eerst te activeren, dan te valideren
+  let result = await activeerLicentie(code);
+  
+  if (result.activated) {
+    const verloopt = result.license_key && result.license_key.expires_at ? result.license_key.expires_at : null;
+    slaLicentieOp(code, verloopt);
+    document.getElementById('licentie-overlay').remove();
+    ontgrendelVolledigeVersie();
+    toonMelding('Volledige versie geactiveerd! Welkom.', false);
+  } else if (result.error && result.error.includes('already')) {
+    // Al geactiveerd op dit toestel - valideer
+    let val = await valideerLicentie(code);
+    if (val.valid) {
+      const verloopt = val.license_key && val.license_key.expires_at ? val.license_key.expires_at : null;
+      slaLicentieOp(code, verloopt);
+      document.getElementById('licentie-overlay').remove();
+      ontgrendelVolledigeVersie();
+      toonMelding('Licentie hersteld!', false);
+    } else {
+      btn.textContent = '✓ Activeer volledige versie';
+      btn.disabled = false;
+      if(fout) fout.textContent = 'Ongeldige licentiecode. Controleer de code uit je bestelmail.';
+    }
+  } else {
+    btn.textContent = '✓ Activeer volledige versie';
+    btn.disabled = false;
+    const msg = result.error || (result.errors && result.errors[0] && result.errors[0].detail) || 'Ongeldige code.';
+    if(fout) fout.textContent = msg;
+  }
+}
+
+function ontgrendelVolledigeVersie() {
+  // Verwijder GRATIS flag — herlaad de pagina zodat alles opnieuw rendert zonder beperkingen
+  // We slaan op dat de versie ontgrendeld is en herladen
+  localStorage.setItem('gk_volledig', '1');
+  location.reload();
+}
+
+// ── START: check licentie bij laden ───────────────────
+(function() {
+  const volledig = localStorage.getItem('gk_volledig');
+  const licentie = getLicentieStatus();
+  
+  if (volledig && licentie) {
+    // Geldig — verwijder GRATIS
+    // Dit wordt afgehandeld door GRATIS = false te zetten
+    window._LICENTIE_GELDIG = true;
+  }
+})();
+
 // ═══════════════════════════════════════════════════
 // GRATIS VERSIE BEPERKINGEN
 // ═══════════════════════════════════════════════════
-const GRATIS = true;
+const GRATIS = !window._LICENTIE_GELDIG;
 const MAX_GROEPEN = 2;
 const MAX_ING = 4;
 const BLUR_VANAF = 2; // rijen 1 en 2 zichtbaar, rest geblurd
@@ -234,7 +422,7 @@ function gratisUpgrade(reden) {
     + '<div style="font-size:14px;font-weight:700;margin-bottom:8px">Volledige versie</div>'
     + '<div style="font-size:12px;color:#666;margin-bottom:10px">' + reden + '</div>'
     + '<div style="font-size:11px;color:#888;margin-bottom:16px">Onbeperkt groepen, ingrediënten, opslaan/laden, budgetberekening en meer.</div>'
-    + '<a href="https://groepskoken.gumroad.com" target="_blank" style="display:block;background:#3a6e3a;color:#fff;padding:10px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:8px">⭐ Koop volledige versie — €9</a>'
+    + '<a href="https://groepskoken.gumroad.com" target="_blank" style="display:block;background:#3a6e3a;color:#fff;padding:10px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:8px">⭐ Koop volledige versie — €9.99</a>'
     + '<button onclick="document.getElementById(&quot;g-popup&quot;).remove()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">Sluiten</button>';
 }
 
@@ -733,6 +921,47 @@ function renderOverzicht() {
           <small style="font-weight:400;color:#666">${d.id==='normaal'?Math.max(0,tot.normaal_volw):tot[d.id+'_volw']||0}v · ${d.id==='normaal'?Math.max(0,tot.normaal_kind):tot[d.id+'_kind']||0}k</small></th>`).join('')}
       </tr></thead><tbody>${rows1}</tbody></table>`;
     el.appendChild(blok1);
+    if (typeof GRATIS !== 'undefined' && GRATIS) {
+      setTimeout(() => {
+        const t1 = blok1.querySelector('tbody');
+        if (t1) Array.from(t1.rows).forEach((r,i) => { if(i>=BLUR_VANAF){r.style.filter='blur(4px)';r.style.userSelect='none';r.style.pointerEvents='none';}});
+      }, 0);
+    }
+  }
+
+  // ── MELDING: menutype met personen maar zonder ingrediënten ──
+  const meldingen = [];
+  getAlle().forEach(d => {
+    const kids = d.id==='normaal' ? tot.normaal_kind : Math.max(0,tot[d.id+'_kind']);
+    const volw = d.id==='normaal' ? tot.normaal_volw : Math.max(0,tot[d.id+'_volw']);
+    const heeftPersonen = kids > 0 || volw > 0;
+    const heeftIngs = (ingredienten[d.id]||[]).some(i => i.naam);
+    if (heeftPersonen && !heeftIngs) meldingen.push(d);
+  });
+  if (meldingen.length > 0) {
+    const meldBlok = document.createElement('div');
+    meldBlok.style.cssText = 'background:#fef2f2;border:1px solid #f5c0c0;border-radius:8px;padding:10px 14px;margin-bottom:12px';
+    meldBlok.innerHTML = '<strong style="color:#b00">⚠️ Opgelet:</strong> voor de volgende menutypes zijn er personen maar nog geen ingrediënten ingevoerd:<br>'
+      + meldingen.map(d => `<span class="badge b-custom-${d.id}" style="margin-right:6px;margin-top:4px;display:inline-block">${esc(d.label)}</span>`).join('')
+      + '<span style="font-size:11px;color:#888;display:block;margin-top:6px">Ga naar <em>Recepten</em> om ingrediënten toe te voegen.</span>';
+    el.insertBefore(meldBlok, el.firstChild);
+  }
+  // ── MELDING: menutype met weinig ingrediënten ──────
+  const weinigMeldingen = [];
+  getAlle().forEach(d => {
+    const kids = d.id==='normaal' ? tot.normaal_kind : Math.max(0,tot[d.id+'_kind']);
+    const volw  = d.id==='normaal' ? tot.normaal_volw : Math.max(0,tot[d.id+'_volw']);
+    const heeftPersonen = kids > 0 || volw > 0;
+    const aantalIngs = (ingredienten[d.id]||[]).filter(i => i.naam).length;
+    if (heeftPersonen && aantalIngs > 0 && aantalIngs <= 2) weinigMeldingen.push({d, aantalIngs});
+  });
+  if (weinigMeldingen.length > 0) {
+    const weinigBlok = document.createElement('div');
+    weinigBlok.style.cssText = 'background:#fff8dc;border:1px solid #f5c542;border-radius:8px;padding:10px 14px;margin-bottom:12px';
+    weinigBlok.innerHTML = '<strong style="color:#7a5c00">⚠️ Menu lijkt onvolledig:</strong> de volgende menutypes hebben personen maar slechts 1 of 2 ingrediënten — menu vergeten of niet volledig?<br>'
+      + weinigMeldingen.map(({d, aantalIngs}) => `<span class="badge b-custom-${d.id}" style="margin-right:6px;margin-top:4px;display:inline-block">${esc(d.label)}</span> <span style="font-size:10px;color:#888">(${aantalIngs} ingrediënt${aantalIngs>1?'en':''})</span>`).join(' ')
+      + '<span style="font-size:11px;color:#888;display:block;margin-top:6px">Ga naar <em>Recepten</em> om meer ingrediënten toe te voegen.</span>';
+    el.insertBefore(weinigBlok, el.firstChild);
   }
 
   // ── DEEL 2: Budget per maaltijdtype ───────────────────
@@ -1146,7 +1375,7 @@ function printEssentials() {
     </div>`;
   }).filter(Boolean).join('');
 
-  const html = `<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">
+  let html = `<!DOCTYPE html><html lang="nl"><head><meta charset="UTF-8">
 <title>${titel}</title>
 <style>
   body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:16px;max-width:900px;margin:0 auto}
@@ -1204,16 +1433,32 @@ ${groepSectiesHtml}
 <h2>Voor de keuken — per menutype</h2>
 ${keukenHtml}
 
-<scr' + 'ipt>window.onload=()=>window.print();</scr' + 'ipt>
+${(()=>'<scr'+'ipt>window.onload=()=>window.print();</'+'script>')()}
 </body></html>`;
 
-  // Gratis: voeg blur CSS toe aan essentials HTML
+  // Gratis: blur ingrediëntenrijen vanaf rij 3 in alle tabellen
   if (typeof GRATIS !== 'undefined' && GRATIS) {
-    html = html.replace('</style>', `
-      tr.blur-gratis { filter: blur(4px); user-select: none; }
-      .gratis-banner { background:#fff8dc;border:1px solid #f5c542;border-radius:4px;padding:4px 8px;font-size:10px;color:#7a5c00;margin-top:4px; }
-    </style>`);
+    // Eenvoudige aanpak: split op <tbody>, verwerk elke tbody apart
+    const parts = html.split('<tbody>');
+    for (let pi = 1; pi < parts.length; pi++) {
+      const tbodyEnd = parts[pi].indexOf('</tbody>');
+      const tbody = parts[pi].slice(0, tbodyEnd);
+      const rows = tbody.split('<tr>');
+      let newTbody = rows[0];
+      for (let ri = 1; ri < rows.length; ri++) {
+        if (ri >= 3) {
+          newTbody += '<tr style="filter:blur(4px);user-select:none">' + rows[ri];
+        } else {
+          newTbody += '<tr>' + rows[ri];
+        }
+      }
+      parts[pi] = newTbody + parts[pi].slice(tbodyEnd);
+    }
+    html = parts.join('<tbody>');
+    // Banner bovenaan
+    html = html.replace('<h1>', '<div style="background:#fff8dc;border:1px solid #f5c542;border-radius:4px;padding:6px 12px;font-size:11px;color:#7a5c00;margin-bottom:12px">&#128274; Gratis versie &mdash; ingrediënten vanaf rij 3 verborgen. <a href="https://groepskoken.gumroad.com" style="color:#3a6e3a;font-weight:700">Upgrade</a></div><h1>');
   }
+
   const blob = new Blob([html], {type:'text/html'});
   const url  = URL.createObjectURL(blob);
   window.open(url, '_blank');
@@ -1310,6 +1555,21 @@ function renderAlles() {
 // Start met 1 groep klaar
 injectDieetStyles();
 groepToevoegen();
+
+// Toon licentie badge
+(function() {
+  const badge = document.getElementById('licentie-status-badge');
+  const licentie = getLicentieStatus();
+  if (badge) {
+    if (window._LICENTIE_GELDIG && licentie) {
+      badge.innerHTML = '<span style="font-size:10px;font-weight:700;background:#e8f5e8;color:#3a6e3a;padding:2px 8px;border-radius:4px;border:1px solid #b8d8b8">✓ VOLLEDIG</span>';
+      const btn = document.getElementById('btn-licentie');
+      if (btn) { btn.textContent = '✓ Geactiveerd'; btn.style.background='#e8f5e8'; btn.style.color='#3a6e3a'; btn.style.border='1px solid #b8d8b8'; }
+    } else {
+      badge.innerHTML = '<span style="font-size:10px;font-weight:700;background:#f5c542;color:#7a5c00;padding:2px 8px;border-radius:4px">GRATIS VERSIE</span>';
+    }
+  }
+})();
 </script>
 </body>
 </html>
