@@ -422,7 +422,7 @@ function gratisUpgrade(reden) {
     + '<div style="font-size:14px;font-weight:700;margin-bottom:8px">Volledige versie</div>'
     + '<div style="font-size:12px;color:#666;margin-bottom:10px">' + reden + '</div>'
     + '<div style="font-size:11px;color:#888;margin-bottom:16px">Onbeperkt groepen, ingrediënten, opslaan/laden, budgetberekening en meer.</div>'
-    + '<a href="https://groepskoken.gumroad.com" target="_blank" style="display:block;background:#3a6e3a;color:#fff;padding:10px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:8px">⭐ Koop volledige versie — €9.99</a>'
+    + '<a href="https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031" target="_blank" style="display:block;background:#3a6e3a;color:#fff;padding:10px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px;margin-bottom:8px">⭐ Koop volledige versie — €9.99</a>'
     + '<button onclick="document.getElementById(&quot;g-popup&quot;).remove()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">Sluiten</button>';
 }
 
@@ -739,7 +739,7 @@ function renderIngSecties() {
         <tbody id="ing-tbody-${d.id}"></tbody>
       </table>
       ${typeof GRATIS !== 'undefined' && GRATIS && (ingredienten[d.id]||[]).length >= MAX_ING
-        ? `<div style="margin-top:6px;font-size:11px;color:#7a5c00;background:#fff8dc;border:1px solid #f5c542;border-radius:6px;padding:5px 10px">⭐ Max. ${MAX_ING} ingrediënten. <a href="https://groepskoken.gumroad.com" target="_blank" style="color:#3a6e3a;font-weight:700">Upgrade →</a></div>`
+        ? `<div style="margin-top:6px;font-size:11px;color:#7a5c00;background:#fff8dc;border:1px solid #f5c542;border-radius:6px;padding:5px 10px">⭐ Max. ${MAX_ING} ingrediënten. <a href="https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031" target="_blank" style="color:#3a6e3a;font-weight:700">Upgrade →</a></div>`
         : `<button class="btn-add-ing no-print" onclick="ingToevoegen('${d.id}')">+ Ingrediënt toevoegen</button>`
       }`;
     el.appendChild(blok);
@@ -1076,7 +1076,7 @@ function renderOverzicht() {
       // Show gratis banner above table
       const banner = document.createElement('div');
       banner.style.cssText = 'margin-bottom:10px;font-size:11px;background:#fff8dc;border:1px solid #f5c542;border-radius:6px;padding:7px 12px;color:#7a5c00';
-      banner.innerHTML = '🔒 <strong>Gratis versie:</strong> budgetten berekend met €1/eenheid. <a href="https://groepskoken.gumroad.com" target="_blank" style="color:#3a6e3a;font-weight:700">Koop de volledige versie</a> voor eigen prijzen.';
+      banner.innerHTML = '🔒 <strong>Gratis versie:</strong> budgetten berekend met €1/eenheid. <a href="https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031" target="_blank" style="color:#3a6e3a;font-weight:700">Koop de volledige versie</a> voor eigen prijzen.';
       blok2.insertBefore(banner, blok2.querySelector('table'));
     }, 0);
   }
@@ -1456,7 +1456,7 @@ ${(()=>'<scr'+'ipt>window.onload=()=>window.print();</'+'script>')()}
     }
     html = parts.join('<tbody>');
     // Banner bovenaan
-    html = html.replace('<h1>', '<div style="background:#fff8dc;border:1px solid #f5c542;border-radius:4px;padding:6px 12px;font-size:11px;color:#7a5c00;margin-bottom:12px">&#128274; Gratis versie &mdash; ingrediënten vanaf rij 3 verborgen. <a href="https://groepskoken.gumroad.com" style="color:#3a6e3a;font-weight:700">Upgrade</a></div><h1>');
+    html = html.replace('<h1>', '<div style="background:#fff8dc;border:1px solid #f5c542;border-radius:4px;padding:6px 12px;font-size:11px;color:#7a5c00;margin-bottom:12px">&#128274; Gratis versie &mdash; ingrediënten vanaf rij 3 verborgen. <a href="https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031" style="color:#3a6e3a;font-weight:700">Upgrade</a></div><h1>');
   }
 
   const blob = new Blob([html], {type:'text/html'});
