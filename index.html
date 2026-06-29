@@ -439,7 +439,20 @@ if (!window._LICENTIE_GELDIG) {
     } catch(e) {}
   }
 }
-const GRATIS = !window._LICENTIE_GELDIG;
+function isGRATIS() {
+  if (window.location.search.indexOf('test=1') !== -1) return false;
+  if (window._LICENTIE_GELDIG) return false;
+  try {
+    const vol = localStorage.getItem('gk_volledig');
+    const lic = localStorage.getItem('gk_licentie');
+    if (vol && lic) {
+      const d = JSON.parse(lic);
+      if (!d.verloopt || new Date(d.verloopt) > new Date()) return false;
+    }
+  } catch(e) {}
+  return true;
+}
+const GRATIS = isGRATIS();
 const MAX_GROEPEN = 2;
 const MAX_ING = 4;
 const BLUR_VANAF = 2; // rijen 1 en 2 zichtbaar, rest geblurd
