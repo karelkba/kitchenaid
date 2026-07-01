@@ -272,7 +272,7 @@ function getLicentieStatus() {
 async function valideerLicentie(code) {
   try {
     const body = new URLSearchParams({
-      product_id: 'kitchenapp',
+      product_id: 'Yz5qY8cP-KfQJ16NjlqyyQ==',
       license_key: code.trim(),
       increment_uses_count: 'false'
     });
@@ -292,7 +292,7 @@ async function activeerLicentie(code) {
   // Gumroad: verify with increment_uses_count true to count activation
   try {
     const body = new URLSearchParams({
-      product_id: 'kitchenapp',
+      product_id: 'Yz5qY8cP-KfQJ16NjlqyyQ==',
       license_key: code.trim(),
       increment_uses_count: 'true'
     });
