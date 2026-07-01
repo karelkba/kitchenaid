@@ -633,7 +633,7 @@ function getBekendeIngs() {
 
 // ── GROEPEN ────────────────────────────────────────────
 function groepToevoegen() {
-  if (groepen.length >= MAX_GROEPEN) { gratisUpgrade("De gratis versie is beperkt tot " + MAX_GROEPEN + " groepen."); return; }
+  if (typeof GRATIS !== 'undefined' && GRATIS && groepen.length >= MAX_GROEPEN) { gratisUpgrade("De gratis versie is beperkt tot " + MAX_GROEPEN + " groepen."); return; }
   groepen.push({
     id: Date.now(), naam: 'Groep ' + (groepen.length + 1),
     totaal_kind:0, totaal_volw:0
@@ -759,8 +759,10 @@ function toonNieuwTypeForm() {
 }
 
 function voegCustomTypetoe() {
-  gratisUpgrade("Eigen maaltijdtypes toevoegen is beschikbaar in de volledige versie.");
-  const f = document.getElementById("nieuw-type-form"); if(f) f.remove(); return;
+  if (typeof GRATIS !== 'undefined' && GRATIS) {
+    gratisUpgrade("Eigen maaltijdtypes toevoegen is beschikbaar in de volledige versie.");
+    const f = document.getElementById("nieuw-type-form"); if(f) f.remove(); return;
+  }
   const naam = document.getElementById('nieuw-type-naam').value.trim();
   if (!naam) { toonMelding('Geef een naam in voor het maaltijdtype.', true); return; }
   const kleur = document.getElementById('nieuw-type-kleur').value;
@@ -870,7 +872,7 @@ function renderIngTbody(did, kids, volw) {
 }
 
 function ingToevoegen(did) {
-  if ((ingredienten[did]||[]).length >= MAX_ING) { gratisUpgrade("De gratis versie is beperkt tot " + MAX_ING + " ingrediënten per menutype."); return; }
+  if (typeof GRATIS !== 'undefined' && GRATIS && (ingredienten[did]||[]).length >= MAX_ING) { gratisUpgrade("De gratis versie is beperkt tot " + MAX_ING + " ingrediënten per menutype."); return; }
   ingredienten[did].push({ naam:'', eenheid:'', per_kind:0, per_volw:0 });
   renderAlles();
   setTimeout(() => {
