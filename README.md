@@ -13,5 +13,5 @@ Afdrukken als PDF
 
 Gebruik
 
-Bezoek de applicatie op: https://karelkba.github.io/kitchenaid
+Bezoek de applicatie op: https://karelkba.github.io/kitchenapp
 Volledige versie beschikbaar via: https://karelkba.lemonsqueezy.com/checkout/buy/76f92877-c0ed-4719-acc0-df0a11df9031
