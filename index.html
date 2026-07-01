@@ -6,6 +6,20 @@
 <title>Groepskoken planner — Gratis versie</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+#welcome-banner {
+  background: #3a6e3a;
+  color: #fff;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  gap: 12px;
+  animation: fadeIn 0.5s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+#welcome-banner button { background: none; border: none; color: #fff; font-size: 18px; cursor: pointer; opacity: 0.7; padding: 0 4px; line-height: 1; }
+#welcome-banner button:hover { opacity: 1; }
 input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 body { font-family: Arial, sans-serif; font-size: 12px; color: #222; background: #f2f2f0; }
@@ -1644,6 +1658,25 @@ function renderAlles() {
 // Start met 1 groep klaar
 injectDieetStyles();
 groepToevoegen();
+
+function sluitWelcome() {
+  const el = document.getElementById('welcome-banner');
+  if (el) { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }
+  localStorage.setItem('gk_welcome_gezien', '1');
+}
+// Toon enkel de eerste keer
+if (!localStorage.getItem('gk_welcome_gezien')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const header = document.querySelector('header');
+    if (header) header.insertAdjacentHTML('afterend', `
+<div id="welcome-banner">
+  <span>👋 <strong>Welkom!</strong> Start met je groepen aanmaken links, voeg dieetwensen toe, en vul je recepten in. Het overzicht verschijnt automatisch onderaan.</span>
+  <button onclick="sluitWelcome()" title="Sluiten">×</button>
+</div>`);
+    // Automatisch sluiten na 12 seconden
+    setTimeout(sluitWelcome, 12000);
+  });
+}
 
 // Toon licentie badge
 (function() {
