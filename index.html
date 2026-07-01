@@ -289,31 +289,67 @@ async function valideerLicentie(code) {
 }
 
 async function activeerLicentie(code) {
-  // Gumroad: verify with increment_uses_count true to count activation
+  const MAX_ACTIVATIES = 5;
   try {
-    const body = new URLSearchParams({
+    // Eerst checken zonder te incrementeren hoeveel activaties er al zijn
+    const checkBody = new URLSearchParams({
+      product_id: 'Yz5qY8cP-KfQJ16NjlqyyQ==',
+      license_key: code.trim(),
+      increment_uses_count: 'false'
+    });
+    const checkResp = await fetch('https://api.gumroad.com/v2/licenses/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: checkBody.toString()
+    });
+    const checkData = await checkResp.json();
+
+    if (!checkData.success) {
+      return { activated: false, error: checkData.message || 'Ongeldige licentiecode.' };
+    }
+
+    // Check of licentie al te vaak gebruikt is
+    if (checkData.uses >= MAX_ACTIVATIES) {
+      return { activated: false, error: 'Deze licentiecode is al geactiveerd op het maximum aantal toestellen (' + MAX_ACTIVATIES + '). Neem contact op via karelkba@gmail.com.' };
+    }
+
+    // Nog activaties beschikbaar — incrementeer
+    const activeerBody = new URLSearchParams({
       product_id: 'Yz5qY8cP-KfQJ16NjlqyyQ==',
       license_key: code.trim(),
       increment_uses_count: 'true'
     });
-    const resp = await fetch('https://api.gumroad.com/v2/licenses/verify', {
+    const activeerResp = await fetch('https://api.gumroad.com/v2/licenses/verify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: body.toString()
+      body: activeerBody.toString()
     });
-    const data = await resp.json();
-    // Translate to our expected format
-    if (data.success) {
-      return { activated: true, license_key: { expires_at: null } };
+    const activeerData = await activeerResp.json();
+
+    if (activeerData.success) {
+      // Sla aankoopdatum op voor 1-jaar check
+      const aankoopDatum = activeerData.purchase && activeerData.purchase.sale_timestamp
+        ? activeerData.purchase.sale_timestamp
+        : new Date().toISOString();
+      const verloopt = new Date(aankoopDatum);
+      verloopt.setFullYear(verloopt.getFullYear() + 1);
+      return { activated: true, license_key: { expires_at: verloopt.toISOString() } };
     } else {
-      return { activated: false, error: data.message || 'Ongeldige code' };
+      return { activated: false, error: activeerData.message || 'Activatie mislukt.' };
     }
   } catch(e) {
-    return { activated: false, error: e.message };
+    return { activated: false, error: 'Verbindingsfout: ' + e.message };
   }
 }
 
 function slaLicentieOp(code, verloopt) {
+  // Als geen vervaldatum, bereken 1 jaar vanaf nu
+  if (!verloopt) {
+    const v = new Date();
+    v.setFullYear(v.getFullYear() + 1);
+    verloopt = v.toISOString();
+  }
+  localStorage.setItem('gk_volledig', '1');
   localStorage.setItem(LS_KEY, JSON.stringify({
     code: code.trim().toUpperCase(),
     verloopt: verloopt,
